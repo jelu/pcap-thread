@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
         exit(4);
     }
 
-    while ((opt = getopt(argc, argv, "T:M:C:s:p:m:t:b:I:d:o:n:S:i:W:a:vr:H:P:hDVA:c:")) != -1) {
+    while ((opt = getopt(argc, argv, "T:M:C:s:p:m:t:b:I:d:o:n:S:i:W:a:vr:H:P:hDVA:c:F:")) != -1) {
         switch (opt) {
         case 'T':
             ret = pcap_thread_set_use_threads(&pt, atoi(optarg) ? 1 : 0);
@@ -290,6 +290,9 @@ int main(int argc, char** argv) {
             err = -2;
 #endif
             break;
+        case 'F':
+            ret = pcap_thread_set_use_filter_offline(&pt, atoi(optarg) ? 1 : 0);
+            break;
         case 'h':
             printf(
 "usage: hexdump [options] [filter]\n"
@@ -312,7 +315,6 @@ int main(int argc, char** argv) {
 " -r <file>          pcap savefile (multiple)\n"
 " -W <usec>          queue wait\n"
 " -a <1|0>           use/not use delayed activation of interface capturing\n"
-" -v                 verbose\n"
 #ifdef HAVE_PCAP_SET_TSTAMP_TYPE
 " -H <type>          timestamp type: host, host_lowprec, host_hiprec, adapter\n"
 "                    or adapter_unsynced\n"
@@ -320,6 +322,8 @@ int main(int argc, char** argv) {
 #ifdef HAVE_PCAP_SET_TSTAMP_PRECISION
 " -P <type>          timestamp precision: micro or nano\n"
 #endif
+" -F <1|0>           use/not use filter on offline packets\n"
+" -v                 verbose\n"
 " -D                 display stats on exit\n"
 " -V                 display version and exit\n"
 " -h                 this\n"

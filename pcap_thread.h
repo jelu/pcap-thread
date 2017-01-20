@@ -131,7 +131,7 @@ enum pcap_thread_activate_mode {
 
 #define PCAP_THREAD_T_INIT { \
     0, 0, 0, \
-    0, 1, PCAP_THREAD_DEFAULT_QUEUE_MODE, PCAP_THREAD_DEFAULT_QUEUE_SIZE, \
+    0, 1, 0, PCAP_THREAD_DEFAULT_QUEUE_MODE, PCAP_THREAD_DEFAULT_QUEUE_SIZE, \
     PCAP_THREAD_T_INIT_QUEUE \
     0, 0, 0, 0, PCAP_THREAD_DEFAULT_TIMEOUT, \
     0, 0, PCAP_THREAD_T_INIT_PRECISION, 0, \
@@ -150,6 +150,7 @@ struct pcap_thread {
 
     int                         running;
     int                         use_threads;
+    int                         use_filter_offline;
     pcap_thread_queue_mode_t    queue_mode;
     size_t                      queue_size;
 
@@ -213,7 +214,7 @@ struct pcap_thread {
     0, 0, 0, 0, 0, 0, \
     0, \
     PCAP_THREAD_PCAPLIST_T_INIT_THREAD \
-    { 0, 0 } \
+    { 0, 0 }, 0 \
 }
 
 struct pcap_thread_pcaplist {
@@ -233,6 +234,7 @@ struct pcap_thread_pcaplist {
 #endif
 
     struct bpf_program      bpf;
+    int                     filter_offline;
 };
 
 const char* pcap_thread_version_str(void);
@@ -245,6 +247,8 @@ void pcap_thread_free(pcap_thread_t* pcap_thread);
 
 int pcap_thread_use_threads(const pcap_thread_t* pcap_thread);
 int pcap_thread_set_use_threads(pcap_thread_t* pcap_thread, const int use_threads);
+int pcap_thread_use_filter_offline(const pcap_thread_t* pcap_thread);
+int pcap_thread_set_use_filter_offline(pcap_thread_t* pcap_thread, const int use_filter_offline);
 pcap_thread_queue_mode_t pcap_thread_queue_mode(const pcap_thread_t* pcap_thread);
 int pcap_thread_set_queue_mode(pcap_thread_t* pcap_thread, const pcap_thread_queue_mode_t queue_mode);
 struct timeval pcap_thread_queue_wait(const pcap_thread_t* pcap_thread);

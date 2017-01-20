@@ -111,6 +111,27 @@ int pcap_thread_set_use_threads(pcap_thread_t* pcap_thread, const int use_thread
     return PCAP_THREAD_OK;
 }
 
+int pcap_thread_use_filter_offline(const pcap_thread_t* pcap_thread) {
+    if (!pcap_thread) {
+        return -1;
+    }
+
+    return pcap_thread->use_filter_offline;
+}
+
+int pcap_thread_set_use_filter_offline(pcap_thread_t* pcap_thread, const int use_filter_offline) {
+    if (!pcap_thread) {
+        return PCAP_THREAD_EINVAL;
+    }
+    if (pcap_thread->running) {
+        return PCAP_THREAD_ERUNNING;
+    }
+
+    pcap_thread->use_filter_offline = use_filter_offline;
+
+    return PCAP_THREAD_OK;
+}
+
 pcap_thread_queue_mode_t pcap_thread_queue_mode(const pcap_thread_t* pcap_thread) {
     if (!pcap_thread) {
         return -1;
@@ -795,6 +816,7 @@ int pcap_thread_open_offline(pcap_thread_t* pcap_thread, const char* file, void*
     }
     memcpy(pcaplist, &_pcaplist_defaults, sizeof(pcap_thread_pcaplist_t));
     pcaplist->is_offline = 1;
+    pcaplist->filter_offline = pcap_thread->use_filter_offline;
     if (!(pcaplist->name = strdup(file))) {
         free(pcaplist);
         return PCAP_THREAD_ENOMEM;
@@ -1016,6 +1038,10 @@ static void _callback(u_char* user, const struct pcap_pkthdr* pkthdr, const u_ch
         return;
     }
 
+    if (pcaplist->is_offline && pcaplist->filter_offline && !pcap_offline_filter(&(pcaplist->bpf), pkthdr, pkt)) {
+        return;
+    }
+
     if (pcap_thread->queue_mode == PCAP_THREAD_QUEUE_MODE_DIRECT) {
         if (pcap_thread->callback) {
             pcap_thread->callback(pcaplist->user, pkthdr, pkt, pcaplist->name, pcap_datalink(pcaplist->pcap));
@@ -1119,6 +1145,10 @@ static void _callback2(u_char* user, const struct pcap_pkthdr* pkthdr, const u_c
     }
     if (!pcaplist->pcap_thread->callback) {
         pcaplist->running = 0;
+        return;
+    }
+
+    if (pcaplist->is_offline && pcaplist->filter_offline && !pcap_offline_filter(&(pcaplist->bpf), pkthdr, pkt)) {
         return;
     }
 
@@ -1548,8 +1578,6 @@ int pcap_thread_stats(pcap_thread_t* pcap_thread, pcap_thread_stats_callback_t c
     pcap_thread->status = 0;
 
     for (pcaplist = pcap_thread->pcaplist; pcaplist; pcaplist = pcaplist->next) {
-        if (pcaplist->is_offline)
-            continue;
         if ((pcap_thread->status = pcap_stats(pcaplist->pcap, &stats))) {
             PCAP_THREAD_SET_ERRBUF(pcap_thread, "pcap_stats()");
             return PCAP_THREAD_EPCAP;
