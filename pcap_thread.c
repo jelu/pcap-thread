@@ -1315,8 +1315,6 @@ static void pcap_thread_callback(u_char* user, const struct pcap_pkthdr* pkthdr,
     pcap_thread_pcaplist_t* pcaplist = (pcap_thread_pcaplist_t*)user;
     size_t                  length;
     pcap_thread_packet_t    packet;
-    const u_char*           orig = pkt;
-    size_t                  origlength;
 
     if (!pcaplist) {
         return;
@@ -1337,10 +1335,11 @@ static void pcap_thread_callback(u_char* user, const struct pcap_pkthdr* pkthdr,
     memset(&packet, 0, sizeof(packet));
     packet.name        = name;
     packet.dlt         = dlt;
+    packet.pkt         = pkt;
+    packet.len         = pkthdr->caplen;
     packet.pkthdr      = *pkthdr;
     packet.have_pkthdr = 1;
     length             = pkthdr->caplen;
-    origlength         = length;
 
     layer_tracef("packet, length %lu", length);
 
@@ -1461,7 +1460,7 @@ static void pcap_thread_callback(u_char* user, const struct pcap_pkthdr* pkthdr,
     if (pcaplist->pcap_thread->callback_invalid) {
         if (packet.state == PCAP_THREAD_PACKET_OK)
             packet.state = PCAP_THREAD_PACKET_INVALID;
-        pcaplist->pcap_thread->callback_invalid(pcaplist->user, &packet, orig, origlength);
+        pcaplist->pcap_thread->callback_invalid(pcaplist->user, &packet, packet.pkt, packet.len);
     }
 }
 
@@ -1752,6 +1751,8 @@ static void pcap_thread_callback_ieee802(u_char* user, pcap_thread_packet_t* pac
             uint16_t             tci;
 
             memset(&ieee802pkt, 0, sizeof(ieee802pkt));
+            ieee802pkt.pkt          = payload;
+            ieee802pkt.len          = length;
             ieee802pkt.prevpkt      = packet;
             ieee802pkt.have_prevpkt = 1;
 
@@ -1820,6 +1821,8 @@ static void pcap_thread_callback_gre(u_char* user, pcap_thread_packet_t* packet,
         layer_trace("have_grehdr");
 
         memset(&grepkt, 0, sizeof(grepkt));
+        grepkt.pkt          = payload;
+        grepkt.len          = length;
         grepkt.prevpkt      = packet;
         grepkt.have_prevpkt = 1;
 

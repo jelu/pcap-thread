@@ -226,7 +226,10 @@ struct pcap_thread_packet {
 
     const char*                    name;
     int                            dlt;
+    const u_char*                  pkt;
+    size_t                         len;
     pcap_thread_packet_t*          prevpkt;
+
     struct pcap_pkthdr             pkthdr;
     struct pcap_thread_linux_sll   linux_sll;
     struct ether_header            ethhdr;
