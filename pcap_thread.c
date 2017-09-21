@@ -2418,6 +2418,8 @@ static pcap_thread_packet_state_t pcap_thread_callback_ipv4_frag(u_char* user, p
 
             frags->packet.name   = packet->name;
             frags->packet.dlt    = packet->dlt;
+            frags->packet.pkt    = frags->payload;
+            frags->packet.len    = frags->length;
             frags->packet.pkthdr = packet->pkthdr;
 
             *whole_packet  = &(frags->packet);
@@ -3061,6 +3063,8 @@ static pcap_thread_packet_state_t pcap_thread_callback_ipv6_frag(u_char* user, p
 
             frags->packet.name   = packet->name;
             frags->packet.dlt    = packet->dlt;
+            frags->packet.pkt    = frags->payload;
+            frags->packet.len    = frags->length;
             frags->packet.pkthdr = packet->pkthdr;
 
             *whole_packet  = &(frags->packet);
