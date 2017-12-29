@@ -377,10 +377,11 @@ enum pcap_thread_activate_mode {
 #define PCAP_THREAD_T_INIT_PRECISION 0
 #endif
 
-typedef void* (*pcap_thread_layer_callback_frag_new_t)(void* conf, u_char* user);
-typedef void (*pcap_thread_layer_callback_frag_free_t)(void* ctx);
+typedef void* (*pcap_thread_layer_callback_ctx_new_t)(void* conf, u_char* user);
+typedef void (*pcap_thread_layer_callback_ctx_free_t)(void* ctx);
 typedef pcap_thread_packet_state_t (*pcap_thread_layer_callback_frag_reassemble_t)(void* ctx, const pcap_thread_packet_t* packet, const u_char* payload, size_t length, pcap_thread_packet_t** whole_packet, const u_char** whole_payload, size_t* whole_length);
 typedef void (*pcap_thread_layer_callback_frag_release_t)(void* ctx, const pcap_thread_packet_t* packet, const u_char* payload, size_t length);
+typedef void (*pcap_thread_layer_callback_stream_handler_t)(void* ctx, const pcap_thread_packet_t* packet, const u_char* payload, size_t length);
 
 /* clang-format off */
 #define PCAP_THREAD_LAYER_CALLBACK_FRAG_T_INIT { \
@@ -391,10 +392,24 @@ typedef void (*pcap_thread_layer_callback_frag_release_t)(void* ctx, const pcap_
 typedef struct pcap_thread_layer_callback_frag pcap_thread_layer_callback_frag_t;
 struct pcap_thread_layer_callback_frag {
     void* conf;
-    pcap_thread_layer_callback_frag_new_t new;
-    pcap_thread_layer_callback_frag_free_t       free;
+    pcap_thread_layer_callback_ctx_new_t new;
+    pcap_thread_layer_callback_ctx_free_t       free;
     pcap_thread_layer_callback_frag_reassemble_t reassemble;
     pcap_thread_layer_callback_frag_release_t    release;
+};
+
+/* clang-format off */
+#define PCAP_THREAD_LAYER_CALLBACK_STREAM_T_INIT { \
+    0, 0, 0, 0 \
+}
+/* clang-format on */
+
+typedef struct pcap_thread_layer_callback_stream pcap_thread_layer_callback_stream_t;
+struct pcap_thread_layer_callback_stream {
+    void* conf;
+    pcap_thread_layer_callback_ctx_new_t new;
+    pcap_thread_layer_callback_ctx_free_t       free;
+    pcap_thread_layer_callback_stream_handler_t    handler;
 };
 
 /* clang-format off */
@@ -411,6 +426,7 @@ struct pcap_thread_layer_callback_frag {
     { 0, 0 }, { 0, 0 }, \
     PCAP_THREAD_DEFAULT_ACTIVATE_MODE, \
     0, 0, 0, 0, 0, 0, 0, 0, PCAP_THREAD_LAYER_CALLBACK_FRAG_T_INIT, 0, PCAP_THREAD_LAYER_CALLBACK_FRAG_T_INIT, 0, 0, 0, 0, \
+    PCAP_THREAD_LAYER_CALLBACK_STREAM_T_INIT, \
     0 \
 }
 /* clang-format on */
@@ -489,6 +505,8 @@ struct pcap_thread {
     pcap_thread_layer_callback_t      callback_icmpv6;
     pcap_thread_layer_callback_t      callback_udp;
     pcap_thread_layer_callback_t      callback_tcp;
+
+    pcap_thread_layer_callback_stream_t callback_stream;
 
     pcap_thread_layer_callback_t callback_invalid;
 };
